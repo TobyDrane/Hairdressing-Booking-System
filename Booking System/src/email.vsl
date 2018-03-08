@@ -1,0 +1,15 @@
+Dear $firstName
+
+You are scheduled for the following appointment at Tindalls Salon.
+
+	$dateString $timeString - $service
+	
+If you have any questions regarding your appointment please call 07539 519570 
+	
+	20 High St, 
+	Haddenham, 
+	Ely, 
+	Cambridgeshire, CB6 3XA
+	
+Regards. 
+	

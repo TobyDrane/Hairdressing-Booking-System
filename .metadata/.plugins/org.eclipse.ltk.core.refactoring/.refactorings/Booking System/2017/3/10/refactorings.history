@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename field &apos;rebook&apos; in &apos;com.toby.booking.views.misc.AppointmentDialog&apos; to &apos;rebookButton&apos;&#x0D;&#x0A;- Original project: &apos;Booking System&apos;&#x0D;&#x0A;- Original element: &apos;com.toby.booking.views.misc.AppointmentDialog.rebook&apos;&#x0D;&#x0A;- Renamed element: &apos;com.toby.booking.views.misc.AppointmentDialog.rebookButton&apos;&#x0D;&#x0A;- Update references to refactored element&#x0D;&#x0A;- Update textual occurrences in comments and strings" delegate="false" deprecate="false" description="Rename field &apos;rebook&apos;" flags="589830" getter="false" id="org.eclipse.jdt.ui.rename.field" input="/src&lt;com.toby.booking.views.misc{AppointmentDialog.java[AppointmentDialog^rebook" name="rebookButton" references="true" setter="false" stamp="1488798626249" textual="false" version="1.0"/>
+</session>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<commands>
+	<moveEntry
+		id="org.eclipse.wb.swing.components.awt java.awt.TextArea"
+		category="org.eclipse.wb.swing.components.awt"
+		nextEntry="org.eclipse.wb.swing.components.awt java.awt.Checkbox"/>
+</commands>

@@ -1,0 +1,76 @@
+package com.toby.booking.common;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Database {
+	
+	public Connection connection;
+	public Statement statement;
+	public PreparedStatement preparedStatement;
+	
+	/**
+	 * Sets up the connection to the database
+	 */
+	public Database(){
+		try {
+			connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/Booking_System", "root", "root");
+			statement = connection.createStatement();
+			System.out.println("MYSQL CONNECTION SUCCESSFUL");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public List<String> getCustomers(){
+		List<String> customers = new ArrayList<String>();
+		try{
+			ResultSet set = statement.executeQuery("select * from tableCustomers");
+			
+			while(set.next()){
+				customers.add(set.getString("Customer_FirstName") + " " + set.getString("Customer_LastName"));
+			}
+		}catch(SQLException e){
+			e.printStackTrace();
+		}
+		return customers;
+	}
+	
+	public List<String> getServices(){
+		List<String> services = new ArrayList<String>();
+		try {
+			ResultSet set = statement.executeQuery("select * from tableServices");
+			
+			while(set.next()){
+				services.add(set.getString("Cut_Type"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return services;
+	}
+	
+	public void createNewAppointment(String date, String time, String customerFirstName, String cutType){
+		int customerID;
+		try {
+			preparedStatement = connection.prepareStatement("select Customer_ID from tableCustomers where Customer_FirstName=?");
+			preparedStatement.setString(1, customerFirstName);
+			ResultSet set = preparedStatement.executeQuery();
+			while(set.next()) customerID = set.getInt("Customer_ID");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	//	PreparedStatement statement = database.connection.prepareStatement("SELECT Customer_ContactNumber, Customer_Email FROM tableCustomers WHERE Customer_FirstName=?");
+	//	statement.setString(1, customerFirstName);
+		System.out.println(date+" "+time);
+		System.out.println(customerFirstName);
+		System.out.println(cutType);
+	}
+}

@@ -1,0 +1,178 @@
+package com.toby.booking.views;
+
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import javax.imageio.ImageIO;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JEditorPane;
+import javax.swing.JFileChooser;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+
+import com.toby.booking.common.Database;
+import com.toby.booking.common.Utils;
+
+public class PatchTestsView extends JPanel implements ActionListener, MouseListener {
+	private static final long serialVersionUID = 1L;
+
+	private JList<String> customerList;
+	private DefaultListModel<String> customerListModel;
+	private JScrollPane customerListScrollPane;
+	
+	private Database database;
+	
+	private JButton loadButton;
+	private JButton saveButton;
+	private JButton deleteButton;
+	private JEditorPane imagePositionPreview;
+	
+	private String imagePath;
+	private BufferedImage image;
+	
+	public PatchTestsView(Database database){
+		this.setLocation(0, 0);
+		this.setSize(new Dimension(1018, 680));
+		this.setOpaque(true);
+		this.setLayout(null);
+		this.database = database;
+		
+		initialize();
+		createWidgets();
+		addWidgets();
+	}
+
+	private void initialize() {
+		customerListModel = new DefaultListModel<>();
+		imagePath = "";
+		
+		loadCustomers();
+	}
+	
+	private void refreshLists(){
+		
+	}
+	
+	private void loadCustomers(){
+		customerListModel.clear();
+		try {
+			PreparedStatement statement = database.connection.prepareStatement("select * from tableCustomers");
+			ResultSet set = statement.executeQuery();
+			while(set.next()){
+				String firstName = set.getString("Customer_FirstName");
+				String lastName = set.getString("Customer_LastName");
+				
+				customerListModel.addElement(firstName + " " + lastName);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void createWidgets() {
+		customerList = new JList<>(customerListModel);
+		customerList.setFont(Utils.FONT_LARGE);
+		customerList.addMouseListener(this);
+		customerList.setLocation(0, 0);
+		customerList.setSize(100, 640);
+		
+		customerListScrollPane = new JScrollPane(customerList);
+		customerListScrollPane.setLocation(10, 11);
+		customerListScrollPane.setSize(290, 658);
+	
+		loadButton = new JButton("Load");
+		loadButton.setSize(100, 34);
+		loadButton.setLocation(785, 42);
+		loadButton.setFont(Utils.FONT_MEDIUM);
+		loadButton.addActionListener(this);
+				
+		saveButton = new JButton("Save");
+		saveButton.setSize(100, 40);
+		saveButton.setLocation(372, 485);
+		saveButton.setFont(Utils.FONT_MEDIUM);
+		saveButton.addActionListener(this);
+		
+		deleteButton = new JButton("Delete");
+		deleteButton.setSize(100, 40);
+		deleteButton.setLocation(662, 485);
+		deleteButton.setFont(Utils.FONT_MEDIUM);
+		deleteButton.addActionListener(this);
+		
+		imagePositionPreview = new JEditorPane();
+		imagePositionPreview.setBounds(372, 42, 390, 420);
+		imagePositionPreview.setEditable(false);
+		imagePositionPreview.setHighlighter(null);
+	}
+
+	private void addWidgets() {
+		this.add(customerListScrollPane);
+		this.add(loadButton);
+		this.add(saveButton);
+		this.add(deleteButton);
+		this.add(imagePositionPreview);
+	}
+
+	private void reloadImage() {
+		try{
+			image = ImageIO.read(new File(imagePath));
+			System.out.println("reload");
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource() == loadButton){
+			if(customerList.isSelectionEmpty()){
+				System.out.println("Nothing selected: Alert Dialog TODO");
+			}else{
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setCurrentDirectory(new java.io.File(Utils.directoryInitial));
+				fileChooser.setDialogTitle("Image Chooser");
+				fileChooser.setFileSelectionMode(JFileChooser.APPROVE_OPTION);
+				if(fileChooser.showOpenDialog(loadButton) == JFileChooser.APPROVE_OPTION){
+					imagePath = fileChooser.getSelectedFile().getAbsolutePath(); 
+					reloadImage();
+				}
+			}
+		}
+	}
+
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+
+		if(image != null){
+			System.out.println("Not Null");
+			g.drawImage(image, 372, 42, 390, 420, this);
+		}
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {}
+
+	@Override
+	public void mousePressed(MouseEvent e) {}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {}
+
+	@Override
+	public void mouseExited(MouseEvent e) {}
+}

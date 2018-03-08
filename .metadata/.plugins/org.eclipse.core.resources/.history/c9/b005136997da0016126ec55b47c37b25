@@ -1,0 +1,424 @@
+package com.toby.booking.views;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DateFormatSymbols;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.UIManager;
+import javax.swing.border.LineBorder;
+
+import com.toby.booking.common.Database;
+import com.toby.booking.common.RoundedRectangle;
+import com.toby.booking.common.Utils;
+import com.toby.booking.views.misc.AddAppointmentDialog;
+import com.toby.booking.views.misc.NavigationBar;
+
+public class CalendarView extends JFrame implements ActionListener{
+	private static final long serialVersionUID = 1L;
+	
+	private JPanel panelNavBar;
+	private JPanel panelMain;
+	private JPanel panelCalendar;
+	private JPanel panelDateSelectionBar;
+	private JPanel panelCalendarView;
+	private RectPanel rectPanel;
+	
+	private JLabel dateLabel;
+	private JButton dateButtonPrev;
+	private JButton dateButtonNext;
+	
+	private NavigationBar navBar;
+	private CustomersView customers;
+	private PreviousColorDataView previousColorData;
+	private PatchTestsView patchTests;
+	public Database database;
+	
+	public List<LocalDate> dates = new ArrayList<LocalDate>();
+	private List<LocalDate> weeksStart = new ArrayList<LocalDate>();
+	
+	private int currentWeek = 0;
+	private Date time;
+	
+	public static final int NUM_ROWS = 24;
+	public static final int NUM_COLUMNS = 8;
+	
+	private JButton[][] calendarViewButtons;
+
+	private AddAppointmentDialog addAppointmentDialog;
+	private JButton btnNewButton;
+	
+	public CalendarView(){
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+
+		
+		initialize(); 
+		createWidgets();
+		createNavBar();
+		addWidgets();
+
+		createCalendar();
+
+		setTitle("Booking System");
+		setSize(1024, 768);
+		setLocationRelativeTo(null);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setResizable(false);
+		getContentPane().setLayout(null);
+		
+		getContentPane().add(panelNavBar);	
+		getContentPane().add(panelMain);
+		
+		setVisible(true);
+	}
+
+	private void initialize(){
+		navBar = new NavigationBar();
+		customers = new CustomersView();
+		previousColorData = new PreviousColorDataView();
+		patchTests = new PatchTestsView();
+		database = new Database();
+
+		panelNavBar = new JPanel();
+		panelNavBar.setBounds(0, 0, 1018, 48);
+		panelNavBar.setLayout(new GridLayout(1, 0, 0, 0));
+
+		panelMain = new JPanel();
+		panelMain.setBounds(0, 48, 1018, 680);
+		panelMain.setLayout(null);
+		
+		panelCalendar = new JPanel();
+		panelCalendar.setBounds(0, 0, 1018, 680);
+		panelMain.add(panelCalendar);
+		panelCalendar.setLayout(null);
+		
+		panelDateSelectionBar = new JPanel();
+		panelDateSelectionBar.setBounds(0, 0, 1018, 64);
+		panelDateSelectionBar.setOpaque(true);
+		panelDateSelectionBar.setBackground(new Color(128, 203, 196));
+		panelDateSelectionBar.setLayout(null);
+		panelCalendar.add(panelDateSelectionBar);
+		
+		panelCalendarView = new JPanel();
+		panelCalendarView.setBounds(0, 64, 1018, 616);
+		GridLayout g = new GridLayout(NUM_ROWS, 0, 0, 0);
+		panelCalendarView.setLayout(g); 
+		panelCalendarView.setOpaque(true);
+		panelCalendar.add(panelCalendarView);
+		
+		rectPanel = new RectPanel();
+		rectPanel.setBounds(0, 64+48, 1018, 616);
+		rectPanel.setOpaque(false);
+		rectPanel.setLayout(null);
+		this.add(rectPanel);
+		
+		addAppointmentDialog = new AddAppointmentDialog(this, database);
+		addAppointmentDialog.buttonConfirm.addActionListener(this);
+
+		try {
+			time = new SimpleDateFormat("HH:mm:ss").parse("09:00:00");
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		
+		createDates();
+	}
+	
+	private void createDates(){
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+		LocalDate startDate = LocalDate.parse(Utils.START_DATE, formatter);
+		LocalDate endDate = LocalDate.parse(Utils.END_DATE, formatter);
+		
+		for(LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)){
+			dates.add(date);
+		}
+		
+		for(int i = 0;i < dates.size();i+=7){
+			LocalDate lDate = (LocalDate) dates.get(i);
+			weeksStart.add(lDate);
+		}
+	}
+	
+	private void createWidgets(){
+		navBar.createWidgets();
+		
+		dateLabel = new JLabel("Test");
+		dateLabel.setFont(new Font("Sathu", Font.TRUETYPE_FONT, 18));
+		dateLabel.setForeground(Color.WHITE);
+		dateLabel.setBounds(430, 7, 150, 50);
+		
+		dateButtonPrev = new JButton("Prev");
+		dateButtonPrev.setBounds(365, 18, 40, 30);
+		dateButtonPrev.addActionListener(this);
+		
+		dateButtonNext = new JButton("Next");
+		dateButtonNext.setBounds(590, 18, 40, 30);
+		dateButtonNext.addActionListener(this);
+		
+		calendarViewButtons = new JButton[NUM_ROWS][NUM_COLUMNS];
+	}
+	
+	private void createNavBar(){
+		panelNavBar.setOpaque(true);
+		panelNavBar.setBackground(new Color(77, 182, 172));
+		
+		navBar.btnCalendar.addActionListener(this);
+		navBar.btnCustomers.addActionListener(this);
+		navBar.btnPColorData.addActionListener(this);
+		navBar.btnPTests.addActionListener(this);
+		
+		panelNavBar.add(navBar.btnCalendar);
+		panelNavBar.add(navBar.btnCustomers);
+		panelNavBar.add(navBar.btnPColorData);
+		panelNavBar.add(navBar.btnPTests);
+	}
+	
+	private void addWidgets(){
+		panelDateSelectionBar.add(dateLabel);
+		panelDateSelectionBar.add(dateButtonPrev);
+		panelDateSelectionBar.add(dateButtonNext);
+	}
+	
+	private void createDateLabel(){
+		LocalDate dateWeekStart = weeksStart.get(currentWeek);
+		
+		int year = dateWeekStart.getYear();
+		int monthWeekStart = dateWeekStart.getMonthValue();
+		int dayWeekStart = dateWeekStart.getDayOfMonth();
+		
+		String monthWeekStartString = new DateFormatSymbols().getMonths()[monthWeekStart-1]; // Could this just be replaced for .getMonths()?
+		
+		int index = 0;
+		for(int i = 0;i < dates.size();i++){
+			if(dateWeekStart == dates.get(i)) index = i;
+		}
+		index += 6;
+		
+		LocalDate weekAheadDate = dates.get(index);
+		int weekAheadDateDay = weekAheadDate.getDayOfMonth();
+		
+		dateLabel.setText(monthWeekStartString.substring(0, 3)+" "+dayWeekStart+" - "+weekAheadDateDay+" "+year);
+	}
+	
+	private void createCalendarView(){
+		Calendar c = Calendar.getInstance();
+
+		for(int i = 0;i < NUM_ROWS;i++){
+			for(int j = 0;j < NUM_COLUMNS;j++){
+				JButton b = new JButton();
+				b.setBorder(LineBorder.createBlackLineBorder());
+				b.setRolloverEnabled(false);
+				b.setBackground(new Color(252, 252, 252));
+				b.setContentAreaFilled(false);
+				b.setFocusPainted(false);
+				b.setOpaque(true);
+				b.addActionListener(this);
+				
+				if(i == 0 && j != 0){
+					LocalDate start = weeksStart.get(currentWeek);
+					int index = 0;
+					for(int a = 0; a < dates.size();a++) if(start == dates.get(a)) index = a;
+					LocalDate date = dates.get(index + (j - 1));
+					String dayOWeek = date.getDayOfWeek().toString();
+					String dateString = dayOWeek.substring(0, 3)+" "+date.toString().substring(8,10)+"/"+date.toString().substring(5, 7);
+					b.setText(dateString);
+				}
+				
+				if(i != 0 & j == 0) {
+					if(i % 2 != 0){
+						b.setText(new SimpleDateFormat("HH:mm:ss").format(time));
+						c.setTime(time);
+						c.add(Calendar.HOUR, 1);
+						time = c.getTime();
+					}
+					
+				}
+
+				calendarViewButtons[i][j] = b;
+				panelCalendarView.add(calendarViewButtons[i][j]);
+			}
+		}
+		
+//		loadAppointments();
+	}
+	
+	private void createCalendar(){
+		createDateLabel();
+		createCalendarView();
+	}
+	
+	private void updateCalendar(){
+		panelCalendarView.removeAll();
+		try {
+			time = new SimpleDateFormat("HH:mm:ss").parse("09:00:00");
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		createDateLabel();
+		createCalendarView();
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent event) {
+		if(event.getSource() == navBar.btnCalendar){
+			panelMain.removeAll();
+			panelMain.add(panelCalendar);
+		}
+		if(event.getSource() == navBar.btnCustomers) {
+			panelMain.removeAll();
+			panelMain.add(customers);
+		}
+		if(event.getSource() == navBar.btnPColorData) {
+			panelMain.removeAll();
+			panelMain.add(previousColorData);
+		}
+		if(event.getSource() == navBar.btnPTests){
+			panelMain.removeAll();
+			panelMain.add(patchTests);
+		}
+		
+		if(event.getSource() == dateButtonNext){
+			if(currentWeek != weeksStart.size()) {
+				currentWeek++;
+				updateCalendar();
+			}
+		}
+		if(event.getSource() == dateButtonPrev){
+			if(currentWeek != 0) {
+				currentWeek--;
+				updateCalendar();
+			}
+		}
+	
+		Date time = null;
+		LocalDate date = null;
+		for(int i = 0;i < NUM_ROWS;i++){
+			for(int j  = 0;j < NUM_COLUMNS;j++){
+				if(event.getSource() == calendarViewButtons[i][j]) {
+					if((i != 0) && (j != 0)){	// This means you can't press the top buttons and side buttons
+						SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+						try{
+							if(i % 2 == 0){ // Checks to see if it is even
+								// Add 30 mins on [i][0]
+								time = sdf.parse(calendarViewButtons[i-1][0].getText());
+								Calendar c = Calendar.getInstance();
+								c.setTime(time);
+								c.add(Calendar.MINUTE, 30);
+								time = sdf.parse(sdf.format(c.getTime()));
+							}else{
+								time = sdf.parse(calendarViewButtons[i][0].getText());
+							}
+						}catch(ParseException e){
+							e.printStackTrace();
+						}
+						
+						LocalDate start = weeksStart.get(currentWeek);
+						int index = dates.indexOf(start);
+						if(j == 1) date = start;
+						else date = dates.get(index+(j-1));
+
+						addAppointmentDialog.sendData(time, date);
+						addAppointmentDialog.updateInfoTextArea();
+						addAppointmentDialog.setVisible(true);
+					}
+				}
+			}
+		}
+
+		if(event.getSource() == addAppointmentDialog.buttonConfirm){
+			addAppointmentDialog.createAppointment();
+			loadAppointments();
+		}
+
+		revalidate();
+		repaint();
+	}
+
+	public void loadAppointments(){
+		rectPanel.removeAll();
+		LocalDate start = weeksStart.get(currentWeek);
+		int index = dates.indexOf(start);
+		LocalDate end = dates.get(index+6);
+		
+		int customerID = 0;
+		int cutID = 0;
+		Date timestampDate;
+		String dateString;	
+		String date;
+		String time;
+		
+		try {
+			PreparedStatement preparedStatement = database.connection.prepareStatement("select * from tableAppointments where Date_Time >= ? and Date_Time <= ?");
+			preparedStatement.setString(1, start.toString());
+			preparedStatement.setString(2, end.toString());
+			ResultSet set = preparedStatement.executeQuery();
+			while(set.next()){
+				timestampDate = set.getTimestamp("Date_Time");
+				customerID = set.getInt("Customer_ID");
+				cutID = set.getInt("Cut_ID");
+				dateString = Utils.simpleDateFormat.format(timestampDate);
+				String parts[] = dateString.split(" ");
+				date = parts[0];
+				time = parts[1];
+				
+				for(int j = 1;j < 8;j++){
+					if(calendarViewButtons[1][j].getText() == )
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		RoundedRectangle r = new RoundedRectangle(128, 33, 127, 25, true, "Blow Dry");
+		rectPanel.addRoundedRectangle(r);
+	}
+		
+	public static void main(String args[]){
+		CalendarView c = new CalendarView();
+	}
+	
+	class RectPanel extends JPanel {
+		private static final long serialVersionUID = 1L;
+		List<RoundedRectangle> roundedRects = new ArrayList<RoundedRectangle>();
+		
+		@Override
+		protected void paintComponent(Graphics g) {
+			super.paintComponent(g);
+			for(RoundedRectangle r : roundedRects){
+				r.draw(g);
+			}
+		}
+		
+		public void removeAll(){
+			roundedRects.clear();
+		}
+		
+		public void addRoundedRectangle(RoundedRectangle r){
+			roundedRects.add(r);
+			repaint();
+		}
+	}
+}

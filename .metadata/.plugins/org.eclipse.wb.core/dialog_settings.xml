@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="org.eclipse.wb.internal.core.model.util.factory.FactoryCreateAction$FactoryCreateDialog">
+		<item value="486" key="x"/>
+		<item value="947" key="width"/>
+		<item value="135" key="y"/>
+		<item value="779" key="height"/>
+	</section>
+	<section name="org.eclipse.wb.internal.core.nls.ui.NlsDialog">
+		<item value="0" key="x"/>
+		<item value="1920" key="width"/>
+		<item value="235" key="y"/>
+		<item value="567" key="height"/>
+	</section>
+</section>
